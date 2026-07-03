@@ -1,5 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
-import type { DetailViewData } from './stats';
+import type { DetailViewData, MemoryBar } from './stats';
 
 export class DetailModal extends Modal {
 	constructor(
@@ -20,6 +20,10 @@ export class DetailModal extends Modal {
 			const setting = new Setting(contentEl)
 				.setName(row.label)
 				.setDesc(row.value);
+
+			if (row.bar) {
+				renderMemoryBar(setting.descEl, row.bar);
+			}
 
 			if (row.actionLabel && row.onClick) {
 				const actionLabel = row.actionLabel;
@@ -67,4 +71,41 @@ export class AffectedFilesModal extends Modal {
 		}
 	}
 
-	onClo
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
+function renderMemoryBar(container: HTMLElement, bar: MemoryBar): void {
+	const wrapper = container.createDiv({ cls: 'device-status-bar' });
+	const header = wrapper.createDiv({ cls: 'device-status-bar__header' });
+
+	header.createSpan({
+		cls: 'device-status-bar__percentage',
+		text: bar.value,
+	});
+	header.createSpan({
+		cls: 'device-status-bar__summary',
+		text: bar.summary,
+	});
+
+	const track = wrapper.createDiv({ cls: 'device-status-bar__track' });
+	track.createDiv({ cls: 'device-status-bar__fill' }).style.width = `${Math.max(
+		0,
+		Math.min(bar.percentage, 100),
+	)}%`;
+
+	const footer = wrapper.createDiv({ cls: 'device-status-bar__footer' });
+	renderBarCaption(footer, bar.primaryLabel, bar.primaryValue);
+	renderBarCaption(footer, bar.secondaryLabel, bar.secondaryValue);
+}
+
+function renderBarCaption(
+	container: HTMLElement,
+	label: string,
+	value: string,
+): void {
+	const caption = container.createDiv({ cls: 'device-status-bar__caption' });
+	caption.createSpan({ text: label });
+	caption.createSpan({ text: value });
+}

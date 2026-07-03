@@ -11,3 +11,55 @@
 	margin: 0.75rem 0 0;
 	padding-left: 1.25rem;
 }
+
+.device-status-bar {
+	margin-top: 0.6rem;
+}
+
+.device-status-bar__header,
+.device-status-bar__footer,
+.device-status-bar__caption {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.device-status-bar__header {
+	margin-bottom: 0.35rem;
+	font-size: var(--font-ui-smaller);
+}
+
+.device-status-bar__percentage {
+	font-weight: 600;
+	color: var(--text-accent);
+}
+
+.device-status-bar__summary {
+	color: var(--text-muted);
+	text-align: right;
+}
+
+.device-status-bar__track {
+	overflow: hidden;
+	height: 0.55rem;
+	border-radius: 999px;
+	background-color: var(--background-modifier-border);
+}
+
+.device-status-bar__fill {
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--color-green), var(--color-cyan));
+}
+
+.device-status-bar__footer {
+	margin-top: 0.45rem;
+	gap: 1rem;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.device-status-bar__caption {
+	flex: 1 1 0;
+}

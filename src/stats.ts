@@ -7,10 +7,22 @@ import {
 	getRepoRelativePath,
 	type GitContext,
 } from './git';
+import { getFreeBytesForPath } from './storage';
+
+export interface MemoryBar {
+	value: string;
+	summary: string;
+	percentage: number;
+	primaryLabel: string;
+	primaryValue: string;
+	secondaryLabel: string;
+	secondaryValue: string;
+}
 
 export interface DetailRow {
 	label: string;
 	value: string;
+	bar?: MemoryBar;
 	actionLabel?: string;
 	onClick?: () => void;
 }
@@ -20,20 +32,38 @@ export interface DetailViewData {
 	rows: DetailRow[];
 }
 
+interface VaultTotals {
+	totalWords: number;
+	totalBytes: number;
+	fileCount: number;
+}
+
 export async function buildPageDetails(app: App): Promise<DetailViewData> {
 	const activeFile = app.workspace.getActiveFile();
 
 	if (!activeFile) {
-			return {
+		return {
 			title: 'Page details',
 			rows: [{ label: 'Status', value: 'No active markdown file.' }],
-			};
+		};
 	}
 
 	const content = await app.vault.read(activeFile);
-	const stat = await app.vault.adapter.stat(activeFile.path);
-	const gitContext = await getGitContext(app);
+	const currentBytes = getByteSize(content);
+	const [gitContext, vaultTotals] = await Promise.all([
+		getGitContext(app),
+		getVaultTotals(app),
+	]);
 	const addedBytes = await getAddedBytesForFile(app, gitContext, activeFile, content);
+	const pageShareBar = buildRatioBar(
+		currentBytes,
+		vaultTotals.totalBytes,
+		'Current page',
+		formatBytes(currentBytes),
+		'Vault total',
+		formatBytes(vaultTotals.totalBytes),
+		'of vault memory',
+	);
 
 	return {
 		title: 'Page details',
@@ -47,7 +77,12 @@ export async function buildPageDetails(app: App): Promise<DetailViewData> {
 			},
 			{
 				label: 'Total memory',
-				value: formatBytes(stat?.size ?? getByteSize(content)),
+				value: formatBytes(currentBytes),
+			},
+			{
+				label: 'Share of vault memory',
+				value: pageShareBar.value,
+				bar: pageShareBar,
 			},
 		],
 	};
@@ -57,21 +92,10 @@ export async function buildVaultDetails(
 	app: App,
 	showAffectedFiles: (files: string[]) => void,
 ): Promise<DetailViewData> {
-	const files = app.vault.getMarkdownFiles();
-	const gitContext = await getGitContext(app);
-
-	let totalWords = 0;
-	let totalBytes = 0;
-
-	for (const file of files) {
-		const [content, stat] = await Promise.all([
-			app.vault.read(file),
-			app.vault.adapter.stat(file.path),
-		]);
-
-		totalWords += countWords(content);
-		totalBytes += stat?.size ?? getByteSize(content);
-	}
+	const [vaultTotals, gitContext] = await Promise.all([
+		getVaultTotals(app),
+		getGitContext(app),
+	]);
 
 	const changedFiles = await getChangedMarkdownFiles(gitContext);
 	let totalAddedBytes = 0;
@@ -86,6 +110,18 @@ export async function buildVaultDetails(
 		}
 	}
 
+	const storageSnapshot = await getFreeBytesForPath(gitContext.vaultBasePath);
+	const storageBar = storageSnapshot.error
+		? undefined
+		: buildRatioBar(
+				vaultTotals.totalBytes,
+				vaultTotals.totalBytes + storageSnapshot.freeBytes,
+				'Vault used',
+				formatBytes(vaultTotals.totalBytes),
+				'Free on device',
+				formatBytes(storageSnapshot.freeBytes),
+				'of vault + free device space',
+			);
 	const affectedCount = changedFiles.files.length;
 	const affectedValue = changedFiles.error
 		? changedFiles.error
@@ -94,13 +130,18 @@ export async function buildVaultDetails(
 	return {
 		title: 'Vault details',
 		rows: [
-			{ label: 'Word count', value: formatNumber(totalWords) },
-			{ label: 'File/page count', value: formatNumber(files.length) },
+			{ label: 'Word count', value: formatNumber(vaultTotals.totalWords) },
+			{ label: 'File/page count', value: formatNumber(vaultTotals.fileCount) },
 			{
 				label: 'Total memory added',
 				value: formatBytes(totalAddedBytes, changedFiles.error ?? undefined),
 			},
-			{ label: 'Total memory used', value: formatBytes(totalBytes) },
+			{ label: 'Total memory used', value: formatBytes(vaultTotals.totalBytes) },
+			{
+				label: 'Vault vs free device space',
+				value: storageBar?.value ?? storageSnapshot.error ?? 'Unavailable',
+				bar: storageBar,
+			},
 			{
 				label: 'Files/pages affected since last commit',
 				value: affectedValue,
@@ -111,6 +152,46 @@ export async function buildVaultDetails(
 						: undefined,
 			},
 		],
+	};
+}
+
+async function getVaultTotals(app: App): Promise<VaultTotals> {
+	const files = app.vault.getMarkdownFiles();
+	let totalWords = 0;
+	let totalBytes = 0;
+
+	for (const file of files) {
+		const content = await app.vault.read(file);
+		totalWords += countWords(content);
+		totalBytes += getByteSize(content);
+	}
+
+	return {
+		totalWords,
+		totalBytes,
+		fileCount: files.length,
+	};
+}
+
+function buildRatioBar(
+	numerator: number,
+	denominator: number,
+	primaryLabel: string,
+	primaryValue: string,
+	secondaryLabel: string,
+	secondaryValue: string,
+	summary: string,
+): MemoryBar {
+	const percentage = denominator > 0 ? (numerator / denominator) * 100 : 0;
+
+	return {
+		value: formatPercent(percentage),
+		summary,
+		percentage,
+		primaryLabel,
+		primaryValue,
+		secondaryLabel,
+		secondaryValue,
 	};
 }
 
@@ -196,8 +277,17 @@ function formatBytes(bytes: number, fallback?: string): string {
 		return `${(bytes / 1024).toFixed(1)} KB`;
 	}
 
-	return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+	if (bytes < 1024 * 1024 * 1024) {
+		return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+	}
+
+	return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function formatNumber(value: number): string {
 	return new Intl.NumberFormat().format(value);
+}
+
+function formatPercent(value: number): string {
+	return `${value.toFixed(value >= 10 ? 1 : 2)}%`;
+}
