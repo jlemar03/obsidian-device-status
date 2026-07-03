@@ -80,5 +80,4 @@ export default class DeviceStatusPlugin extends Plugin {
 		);
 
 		menu.showAtMouseEvent(event);
-	}
-}
+	

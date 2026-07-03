@@ -162,9 +162,4 @@ function getGitErrorMessage(error: unknown, fallback: string): string {
 		}
 	}
 
-	if (error instanceof Error && error.message) {
-		return error.message;
-	}
-
-	return fallback;
-}
+	if (error instanceof Error && error.m

@@ -67,7 +67,4 @@ export class AffectedFilesModal extends Modal {
 		}
 	}
 
-	onClose() {
-		this.contentEl.empty();
-	}
-}
+	onClo

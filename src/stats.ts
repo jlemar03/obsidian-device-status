@@ -201,4 +201,3 @@ function formatBytes(bytes: number, fallback?: string): string {
 
 function formatNumber(value: number): string {
 	return new Intl.NumberFormat().format(value);
-}
