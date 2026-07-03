@@ -51,7 +51,7 @@ export class AffectedFilesModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('device-status-modal');
 
-		contentEl.createEl('h3', { text: 'Affected Files' });
+		contentEl.createEl('h3', { text: 'Affected files' });
 
 		if (this.files.length === 0) {
 			contentEl.createEl('p', { text: 'No changed markdown files.' });

@@ -28,15 +28,15 @@ export default class DeviceStatusPlugin extends Plugin {
 	}
 
 	private updateStatusBarText() {
-		this.statusBarItemEl.setText('Device Status');
+		this.statusBarItemEl.setText('Device status');
 	}
 
 	private openStatusMenu(event: MouseEvent) {
 		const menu = new Menu();
 
 		menu.addItem((item) =>
-			item
-				.setTitle('Page Details')
+				item
+					.setTitle('Page details')
 				.setIcon('file-text')
 				.onClick(async () => {
 					const details = await buildPageDetails(this.app);
@@ -45,8 +45,8 @@ export default class DeviceStatusPlugin extends Plugin {
 		);
 
 		menu.addItem((item) =>
-			item
-				.setTitle('Vault Details')
+				item
+					.setTitle('Vault details')
 				.setIcon('library')
 				.onClick(async () => {
 					const details = await buildVaultDetails(this.app, (files) => {

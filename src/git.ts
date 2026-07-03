@@ -153,9 +153,12 @@ export async function getChangedMarkdownFiles(
 
 function getGitErrorMessage(error: unknown, fallback: string): string {
 	if (error && typeof error === 'object' && 'stderr' in error) {
-		const stderr = String(error.stderr ?? '').trim();
-		if (stderr) {
-			return stderr;
+		const stderr = error.stderr;
+		if (typeof stderr === 'string') {
+			const trimmed = stderr.trim();
+			if (trimmed) {
+				return trimmed;
+			}
 		}
 	}
 

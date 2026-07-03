@@ -24,10 +24,10 @@ export async function buildPageDetails(app: App): Promise<DetailViewData> {
 	const activeFile = app.workspace.getActiveFile();
 
 	if (!activeFile) {
-		return {
-			title: 'Page Details',
+			return {
+			title: 'Page details',
 			rows: [{ label: 'Status', value: 'No active markdown file.' }],
-		};
+			};
 	}
 
 	const content = await app.vault.read(activeFile);
@@ -36,17 +36,17 @@ export async function buildPageDetails(app: App): Promise<DetailViewData> {
 	const addedBytes = await getAddedBytesForFile(app, gitContext, activeFile, content);
 
 	return {
-		title: 'Page Details',
+		title: 'Page details',
 		rows: [
 			{ label: 'Page', value: activeFile.path },
-			{ label: 'Word Count', value: formatNumber(countWords(content)) },
-			{ label: 'Character Count', value: formatNumber(content.length) },
+			{ label: 'Word count', value: formatNumber(countWords(content)) },
+			{ label: 'Character count', value: formatNumber(content.length) },
 			{
-				label: 'Added Memory',
+				label: 'Added memory',
 				value: formatBytes(addedBytes.bytes, addedBytes.error),
 			},
 			{
-				label: 'Total Memory',
+				label: 'Total memory',
 				value: formatBytes(stat?.size ?? getByteSize(content)),
 			},
 		],
@@ -92,17 +92,17 @@ export async function buildVaultDetails(
 		: formatNumber(affectedCount);
 
 	return {
-		title: 'Vault Details',
+		title: 'Vault details',
 		rows: [
-			{ label: 'Word Count', value: formatNumber(totalWords) },
-			{ label: 'File/Page Count', value: formatNumber(files.length) },
+			{ label: 'Word count', value: formatNumber(totalWords) },
+			{ label: 'File/page count', value: formatNumber(files.length) },
 			{
-				label: 'Total Memory Added',
+				label: 'Total memory added',
 				value: formatBytes(totalAddedBytes, changedFiles.error ?? undefined),
 			},
-			{ label: 'Total Memory Used', value: formatBytes(totalBytes) },
+			{ label: 'Total memory used', value: formatBytes(totalBytes) },
 			{
-				label: 'Files/Pages Affected Since Last Commit',
+				label: 'Files/pages affected since last commit',
 				value: affectedValue,
 				actionLabel: affectedCount > 0 ? 'Show list' : undefined,
 				onClick:
