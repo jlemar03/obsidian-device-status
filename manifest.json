@@ -1,0 +1,9 @@
+{
+	"id": "obsidian-device-status",
+	"name": "Vault Status",
+	"version": "1.0.0",
+	"minAppVersion": "1.0.0",
+	"description": "A local development build for the Device Status plugin.",
+	"author": "Jaiden Le Mar",
+	"isDesktopOnly": true
+}

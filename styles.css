@@ -1,0 +1,13 @@
+.device-status-button {
+	cursor: pointer;
+}
+
+.device-status-modal .setting-item {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.device-status-file-list {
+	margin: 0.75rem 0 0;
+	padding-left: 1.25rem;
+}
